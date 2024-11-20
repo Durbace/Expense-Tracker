@@ -59,8 +59,8 @@ input[type="number"], select {
 
 .buttons-container {
   display: flex;
-  justify-content: space-between; /* Aligns one button to the left and one to the right */
-  width: 100%; /* Makes sure the container spans the full width */
+  justify-content: space-between;
+  width: 100%; 
 }
 
 .add-expense-btn {
