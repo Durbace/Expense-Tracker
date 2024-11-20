@@ -42,8 +42,10 @@
       </form>
     </div>
   </div>
-  <button class="add-expense-btn" (click)="toggleAddExpense()">Add Expense</button>
-  <button class="daily-total-btn" (click)="calculateDailyTotal()">Show Daily Total</button>
+  <div class="buttons-container">
+    <button class="add-expense-btn" (click)="toggleAddExpense()">Add Expense</button>
+    <button class="daily-total-btn" (click)="calculateDailyTotal()">Show Daily Total</button>
+  </div>
   <div *ngIf="dailyTotal !== null && showDailyTotal" class="daily-total-text">
     <strong>Daily Total: {{ dailyTotal | currency }}</strong>
   </div>

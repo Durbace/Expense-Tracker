@@ -4,16 +4,16 @@ body {
     margin: 0;
     padding: 20px;
   }
-  
   .container {
     background-color: #fff;
     padding: 20px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     border-radius: 5px;
-    width: 90%;
+    width: 100%;
     max-width: 800px;
     margin: 20px auto;
   }
+  
   
   h2 {
     color: #333;
