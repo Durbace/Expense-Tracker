@@ -1,0 +1,24 @@
+<div class="summary-table-container">
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>Day</th>
+        <th>Category</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let day of getDays()">
+        <tr *ngFor="let expense of expensesByDay[day]; let i = index">
+          <td *ngIf="i === 0" [attr.rowspan]="expensesByDay[day].length">{{ day }}</td>
+          <td>{{ expense.category }}</td>
+          <td>{{ expense.amount | currency }}</td>
+        </tr>
+      </ng-container>
+    </tbody>
+  </table>
+  <button (click)="calculateWeeklyTotal()">Calculate Weekly Total</button>
+  <div *ngIf="weeklyTotal !== null && showWeeklyTotal">
+    <strong>Weekly Total: {{ weeklyTotal | currency }}</strong>
+  </div>
+</div>

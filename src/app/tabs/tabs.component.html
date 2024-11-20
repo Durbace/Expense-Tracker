@@ -1,0 +1,37 @@
+<div class="tabs">
+  <button *ngFor="let day of days" 
+          (click)="changeDay(day)"
+          [class.active]="selectedDay === day">
+    {{ day }}
+  </button>
+  <button class="summary-button" (click)="changeDay('summary')"
+          [class.active]="selectedDay === 'summary'">
+    SUMMARY
+  </button>
+</div>
+
+<div *ngIf="selectedDay && selectedDay !== 'summary'" class="empty-expense-box">
+  <app-daily-expenses [selectedDay]="selectedDay"></app-daily-expenses>
+
+  <div class="nav-row">
+        <button *ngIf="getPreviousDay()"
+                (click)="getPreviousDay() ? changeDay(getPreviousDay()!) : null"
+                class="prev-btn">
+            {{ getPreviousDay() }}
+        </button>
+
+        <button *ngIf="getNextDay()"
+                (click)="getNextDay() ? changeDay(getNextDay()!) : null"
+                class="next-btn">
+            {{ getNextDay() }}
+        </button>
+    </div>
+</div>
+
+<div *ngIf="selectedDay === 'summary'" class="empty-expense-box">
+  <app-weekly-summary></app-weekly-summary>
+</div>
+
+<div *ngIf="!selectedDay" class="empty-expense-box center-message">
+  <p>Please select a day to view or add expenses.</p>
+</div>

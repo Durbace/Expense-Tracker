@@ -1,13 +1,22 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-root',
-  standalone: true,
-  imports: [RouterOutlet],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent {
-  title = '18_proiect_expense_tracker';
+export class AppComponent implements OnInit{
+  selectedDay: string | null = null;
+  showDaily: boolean = true;
+  showSummary: boolean = false;
+
+  ngOnInit(): void {
+    this.selectedDay = null;
+  }
+
+  onDayChange(day: string) {
+    this.showDaily = day !== 'summary';
+    this.showSummary = day === 'summary';
+    this.selectedDay = day;
+  }
 }
