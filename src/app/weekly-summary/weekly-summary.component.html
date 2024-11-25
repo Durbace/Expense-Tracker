@@ -1,0 +1,66 @@
+<div class="summary-table-container">
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>Day</th>
+        <th>Category</th>
+        <th>Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <ng-container *ngFor="let day of getDays()">
+        <tr *ngFor="let expense of expensesByDay[day]; let i = index">
+          <td *ngIf="i === 0" [attr.rowspan]="expensesByDay[day].length">{{ day }}</td>
+          <td>{{ expense.category }}</td>
+          <td>{{ expense.amount | currency }}</td>
+        </tr>
+      </ng-container>
+    </tbody>
+  </table>
+  <button (click)="calculateWeeklyTotal()">Calculate Weekly Total</button>
+  <div *ngIf="weeklyTotal !== null && showWeeklyTotal">
+    <strong>Weekly Total: {{ weeklyTotal | currency }}</strong>
+  </div>
+
+  <button (click)="showWeeklyBudgetForm()">Weekly Budget</button>
+  <button (click)="nextWeek()">Next Week</button>
+  <button (click)="resetWeeklyBudgets()">Reset Weekly Budgets</button>
+  <button (click)="exportToExcel()">Export to Excel</button>
+  <div *ngIf="weeklyBudgetFormVisible">
+    <h3>Set Weekly Budget</h3>
+    <input type="number" [(ngModel)]="currentWeeklyBudget" placeholder="Enter weekly budget" />
+    <button (click)="saveWeeklyBudget()">Save Budget</button>
+  </div>
+  <table class="summary-table">
+    <thead>
+      <tr>
+        <th>Week</th>
+        <th>Budget</th>
+        <th>Expenses</th>
+        <th>Savings</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let week of weeklyBudgets">
+        <td>{{ week.weekNumber }}</td>
+        <td>{{ week.budget | currency }}</td>
+        <td>{{ week.expenses | currency }}</td>
+        <td>{{ week.savings | currency }}</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3"><strong>Total Savings</strong></td>
+        <td><strong>{{ calculateTotalSavings() | currency }}</strong></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<div class="pie-chart-container">
+  <h3>Expenses by Category</h3>
+  <canvas baseChart
+          [data]="pieChartData"
+          [type]="pieChartType">
+  </canvas>
+</div>

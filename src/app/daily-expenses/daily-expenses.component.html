@@ -1,0 +1,53 @@
+<div>
+  <ul *ngIf="expenses.length > 0">
+    <li *ngFor="let expense of expenses">
+      <div class="expense-box">
+        <div class="expense-details">
+          <div class="category-detail">
+            {{ expense.category }}
+          </div>
+          <div class="amount-detail">
+            {{ expense.amount | currency}}
+          </div>
+        </div>
+      </div>
+      <div class="button-container">
+        <button (click)="editExpense(expense)" class="edit-btn"><i class="fas fa-edit"></i></button>
+        <button (click)="deleteExpense(expense.id)" class="delete-btn"><i class="fas fa-trash"></i></button>
+      </div>
+    </li>
+  </ul>
+  <div *ngIf="expenses.length === 0 && !showAddExpense" class="center-message">
+    <span>No expenses for today. Add a new one!</span>
+  </div>
+  <div *ngIf="showAddExpense" class="new-expense-form">
+    <div class="new-expense-box">
+      <div class="form-header" *ngIf="!editingExpenseId">
+        Expense {{ expenseCount }}
+      </div>
+      <form (submit)="editingExpenseId ? updateExpense() : addExpense()">
+        <div class="form-group">
+          <label for="category">Category:</label>
+          <select id="category" [(ngModel)]="currentCategory" name="category" required>
+            <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="amount">Amount:</label>
+          <input id="amount" type="number" [(ngModel)]="currentAmount" name="amount" placeholder="Amount" required>
+        </div>
+    
+        <button type="submit" class="save-btn">Save</button>
+      </form>
+    </div>
+  </div>
+  <div class="buttons-container">
+    <button class="add-expense-btn" (click)="toggleAddExpense()">Add Expense</button>
+    <button class="daily-total-btn" (click)="calculateDailyTotal()">Show Daily Total</button>
+  </div>
+  <div *ngIf="dailyTotal !== null && showDailyTotal" class="daily-total-text">
+    <strong>Daily Total: {{ dailyTotal | currency }}</strong>
+  </div>
+  
+</div>

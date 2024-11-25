@@ -1,0 +1,45 @@
+.summary-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.summary-table th, .summary-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+.summary-table th {
+  background-color: #f8f8f8;
+}
+
+.summary-table td {
+  background-color: #fff;
+}
+
+button {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: black;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #666666;
+}
+
+strong {
+  margin-top: 10px;
+  display: block;
+  font-size: 18px;
+}
+
+.pie-chart-container {
+  text-align: center;
+  width: 400px;
+  height: 400px; 
+  margin: 0 auto; 
+}
+
+

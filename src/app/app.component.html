@@ -1,0 +1,8 @@
+<div *ngIf="!isLoggedIn">
+  <router-outlet></router-outlet>
+</div>
+
+<div *ngIf="isLoggedIn">
+  <button (click)="logout()" class="logout-btn">Logout</button>
+  <app-tabs (dayChanged)="onDayChange($event)"></app-tabs>
+</div>
