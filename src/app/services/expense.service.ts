@@ -15,9 +15,7 @@ export interface Expense {
 export class ExpenseService {
   private expenses: { [key: string]: Expense[] } = {};
 
-  constructor(private authService: AuthService) {
-    this.loadFromLocalStorage();
-  }
+  constructor(private authService: AuthService) {}
 
   addExpense(day: string, category: string, amount: number): void {
     const currentUser = this.authService.getCurrentUser();
@@ -65,19 +63,35 @@ export class ExpenseService {
 
   public loadFromLocalStorage(): void {
     const currentUser = this.authService.getCurrentUser();
+    
     if (!currentUser) {
       console.error('No user logged in. Cannot load expenses.');
       this.expenses = {};
       return;
     }
-
+  
     const storedExpenses = localStorage.getItem(`expenses_${currentUser}`);
+  
     if (storedExpenses) {
-      this.expenses = JSON.parse(storedExpenses);
+      try {
+        const parsedExpenses = JSON.parse(storedExpenses);
+  
+        if (typeof parsedExpenses === 'object' && parsedExpenses !== null) {
+          this.expenses = parsedExpenses;
+        } else {
+          console.warn('Stored expenses are not in the correct format. Resetting data.');
+          this.expenses = {};
+        }
+      } catch (error) {
+        console.error('Error parsing expenses from localStorage:', error);
+        this.expenses = {};
+      }
     } else {
+      console.log('No expenses found in localStorage for user:', currentUser);
       this.expenses = {};
     }
   }
+  
 
   resetWeeklyExpenses(): void {
     const currentUser = this.authService.getCurrentUser();

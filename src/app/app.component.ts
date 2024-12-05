@@ -28,15 +28,19 @@ export class AppComponent implements OnInit{
     this.authService.checkLocalStorage();
     this.isLoggedIn = this.authService.isLoggedIn();
   
-    console.log('Is user logged in:', this.isLoggedIn);
-  
     if (this.isLoggedIn) {
-      this.budgetService.loadFromLocalStorage(); 
+      console.log('User is logged in.');
+      this.budgetService.loadFromLocalStorage();
       this.expenseService.loadFromLocalStorage();
     } else {
-      this.router.navigate(['/login']);
+      console.log('User is not logged in. Redirecting to welcome...');
+      this.router.navigate(['/welcome']); 
     }
   }
+  
+  
+  
+  
 
   onDayChange(day: string) {
     this.showDaily = day !== 'summary';
@@ -44,9 +48,11 @@ export class AppComponent implements OnInit{
     this.selectedDay = day;
   }
 
+  
+
   logout(): void {
     this.authService.logout();
     this.isLoggedIn = false;
-    this.router.navigate(['/login']);
+    this.router.navigate(['/welcome']);
   }
 }

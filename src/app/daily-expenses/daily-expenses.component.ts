@@ -9,8 +9,7 @@ import { Expense, ExpenseService } from '../services/expense.service';
     standalone: false
 })
 export class DailyExpensesComponent implements OnChanges {
-  @Input() selectedDay!: string;
-
+  @Input() selectedDay: string = 'MON';
   expenses: Expense[] = [];
   currentCategory: string = '';
   currentAmount: number | null = null;
@@ -23,6 +22,14 @@ export class DailyExpensesComponent implements OnChanges {
   showDailyTotal: boolean = false;
 
   constructor(private expenseService: ExpenseService) {}
+
+  ngOnInit(): void {
+    if (!this.selectedDay) {
+      this.selectedDay = this.days[0]; 
+    }
+    this.refreshExpenses();
+  }
+
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['selectedDay']) { 

@@ -5,7 +5,7 @@ import { AuthService } from '../services/auth.service';
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrl: './login.component.css',
+  styleUrls: ['./login.component.css'],
   standalone: false
 })
 export class LoginComponent {
@@ -16,10 +16,20 @@ export class LoginComponent {
   constructor(private authService: AuthService, private router: Router) {}
 
   login(): void {
-    if (this.authService.login(this.username, this.password)) {
-      this.router.navigate(['/']);
-    } else {
-      this.errorMessage = 'Invalid username or password';
-    }
+    const observer = {
+      next: (response: any) => {
+        if (response.success) {
+          this.router.navigate(['/expenses']);
+        }
+      },
+      error: (error: any) => {
+        this.errorMessage = error.error.message || 'An error occurred';
+      },
+      complete: () => {
+        console.log('Login request completed');
+      }
+    };
+
+    this.authService.login(this.username, this.password).subscribe(observer);
   }
 }

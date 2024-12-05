@@ -17,9 +17,7 @@ export class BudgetService {
   private currentWeek: number = 1;
   private currentWeeklyBudget: number | null = null;
 
-  constructor(private authService: AuthService) {
-    this.loadFromLocalStorage(); 
-  }
+  constructor(private authService: AuthService) {}
 
   saveWeeklyBudget(budget: number, expenses: number): void {
     const savings = budget - expenses;
@@ -93,7 +91,7 @@ export class BudgetService {
   public loadFromLocalStorage(): void {
     const currentUser = this.authService.getCurrentUser(); 
     if (!currentUser) {
-      console.error('No user logged in. Cannot load data.');
+      console.warn('No user logged in. Cannot load data.');
       this.weeklyBudgets = [];
       this.currentWeek = 1;
       return;
@@ -105,7 +103,6 @@ export class BudgetService {
     if (budgets) {
       try {
         this.weeklyBudgets = JSON.parse(budgets);
-  
         if (!Array.isArray(this.weeklyBudgets)) {
           console.error('weeklyBudgets is not an array. Initializing as empty array.');
           this.weeklyBudgets = [];
@@ -125,6 +122,5 @@ export class BudgetService {
       this.currentWeek = 1;
     }
   }
-  
   
 }
