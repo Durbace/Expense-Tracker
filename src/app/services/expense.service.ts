@@ -25,8 +25,8 @@ export class ExpenseService {
     return this.http.delete(`${this.apiUrl}/expenses/${expenseId}`);
   }
 
-  getExpensesGroupedByDay(userId: string): Observable<Expense[]> {
-    return this.http.get<Expense[]>(`${this.apiUrl}/expenses/${userId}`);
+  getExpensesGroupedByDay(userId: string): Observable<{ expenses: Expense[] }> {
+    return this.http.get<{ expenses: Expense[] }>(`${this.apiUrl}/expenses/${userId}`);
   }
 
   resetWeeklyExpenses(userId: string): Observable<any> {
@@ -39,5 +39,5 @@ export class ExpenseService {
 
   editExpense(expenseId: string, category: string, amount: number): Observable<any> {
     return this.http.put(`${this.apiUrl}/expenses/${expenseId}`, { category, amount });
-  }
+  }  
 }

@@ -30,7 +30,6 @@ export class AppComponent implements OnInit{
     if (this.isLoggedIn) {
       console.log('User is logged in.');
 
-      // Încarcă datele din baza de date
       this.loadUserData();
     } else {
       console.log('User is not logged in. Redirecting to welcome...');

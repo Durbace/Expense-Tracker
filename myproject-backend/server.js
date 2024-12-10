@@ -46,7 +46,11 @@ app.post('/login', async (req, res) => {
         if (!isMatch) {
             return res.status(400).json({ success: false, message: 'Invalid credentials' });
         }
-        res.status(200).json({ success: true, message: 'User logged in successfully' });
+        res.status(200).json({
+            success: true,
+            message: 'User logged in successfully',
+            userId: user._id, 
+        });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -67,7 +71,13 @@ app.get('/expenses/:userId', async (req, res) => {
     const { userId } = req.params;
     try {
         const expenses = await Expense.find({ user: userId });
-        res.status(200).json({ success: true, expenses });
+        const formattedExpenses = expenses.map(expense => ({
+            id: expense._id,
+            day: expense.day,
+            category: expense.category,
+            amount: expense.amount,
+        }));
+        res.status(200).json({ success: true, expenses: formattedExpenses });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

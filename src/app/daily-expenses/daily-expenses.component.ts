@@ -69,14 +69,16 @@ export class DailyExpensesComponent implements OnChanges {
   
   updateExpense() {
     if (!this.currentCategory || this.currentAmount == null || this.editingExpenseId == null) return;
-
+  
     this.expenseService
       .editExpense(this.editingExpenseId.toString(), this.currentCategory, this.currentAmount)
       .subscribe(() => {
         this.refreshExpenses();
         this.closeAddExpense();
+        this.editingExpenseId = null; 
       });
   }
+  
 
   editExpense(expense: Expense) {
     this.currentCategory = expense.category;
@@ -86,14 +88,27 @@ export class DailyExpensesComponent implements OnChanges {
   }
 
   deleteExpense(id: number) {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) return;
-  
-    this.expenseService.deleteExpense(id.toString()).subscribe(() => {
-      this.refreshExpenses();
-      this.expenseCount = Math.max(0, this.expenseCount - 1); 
-    });
+  console.log("Attempting to delete expense with ID:", id);
+  const currentUser = this.authService.getCurrentUser();
+  if (!currentUser) {
+    console.log("No user logged in.");
+    return;
   }
+
+  if (!id) {
+    console.error('ID is undefined');
+    return;
+  }
+
+  this.expenseService.deleteExpense(id.toString()).subscribe(() => {
+    console.log("Expense deleted successfully");
+    this.refreshExpenses();
+  }, error => {
+    console.error('Failed to delete the expense:', error);
+  });
+}
+
+
 
   resetForm() {
     this.refreshExpenses();
@@ -107,10 +122,16 @@ export class DailyExpensesComponent implements OnChanges {
   refreshExpenses() {
     const currentUser = this.authService.getCurrentUser();
     if (currentUser) {
-      this.expenseService.getExpensesGroupedByDay(currentUser).subscribe((expenses) => {
-        this.expenses = expenses.filter((expense) => expense.day === this.selectedDay);
-        this.expenseCount = this.expenses.length; 
-      });
+      this.expenseService.getExpensesGroupedByDay(currentUser).subscribe((response) => {
+        if (response && Array.isArray(response.expenses)) {
+            this.expenses = response.expenses.filter((expense) => expense.day === this.selectedDay);
+            this.expenseCount = this.expenses.length + 1;
+        } else {
+            console.error('Unexpected response:', response);
+            this.expenses = [];
+            this.expenseCount = 1;
+        }
+    });
     }
   }
 

@@ -50,25 +50,35 @@ import { AuthService } from '../services/auth.service';
     refreshExpenses() {
       const currentUser = this.authService.getCurrentUser();
       if (currentUser) {
-        this.expenseService.getExpensesGroupedByDay(currentUser).subscribe((expenses) => {
-          this.expensesByDay = expenses.reduce((acc: { [day: string]: Expense[] }, expense: Expense) => {
-            acc[expense.day] = acc[expense.day] || [];
-            acc[expense.day].push(expense);
-            return acc;
-          }, {});
-          this.generatePieChart();
+        this.expenseService.getExpensesGroupedByDay(currentUser).subscribe((response) => {
+          if (response && Array.isArray(response.expenses)) {
+            this.expensesByDay = response.expenses.reduce((acc: { [day: string]: Expense[] }, expense: Expense) => {
+              acc[expense.day] = acc[expense.day] || [];
+              acc[expense.day].push(expense);
+              return acc;
+            }, {});
+            this.generatePieChart();
+          } else {
+            console.error('Unexpected response format:', response);
+          }
         });
       }
     }
+    
   
     refreshWeeklyBudgets() {
       const currentUser = this.authService.getCurrentUser();
       if (currentUser) {
-        this.budgetService.getWeeklyBudgets(currentUser).subscribe((budgets) => {
-          this.weeklyBudgets = budgets;
+        this.budgetService.getWeeklyBudgets(currentUser).subscribe((response) => {
+          if (response && Array.isArray(response.budgets)) {
+            this.weeklyBudgets = response.budgets;
+          } else {
+            console.error('Unexpected response format:', response);
+          }
         });
       }
     }
+    
 
     calculateWeeklyTotal() {
       const currentUser = this.authService.getCurrentUser();
@@ -127,16 +137,23 @@ import { AuthService } from '../services/auth.service';
         this.budgetService.incrementWeek();
         this.currentWeek = this.budgetService.getCurrentWeek();
     
-        this.expenseService.getExpensesGroupedByDay(currentUser).subscribe((expenses) => {
-          this.expensesByDay = expenses.reduce((acc: { [day: string]: Expense[] }, expense: Expense) => {
-            acc[expense.day] = acc[expense.day] || [];
-            acc[expense.day].push(expense);
-            return acc;
-          }, {});
-          this.generatePieChart();
+        this.expenseService.getExpensesGroupedByDay(currentUser).subscribe((response) => {
+          const expensesArray = response?.expenses;
+    
+          if (Array.isArray(expensesArray)) {
+            this.expensesByDay = expensesArray.reduce((acc: { [day: string]: Expense[] }, expense: Expense) => {
+              acc[expense.day] = acc[expense.day] || [];
+              acc[expense.day].push(expense);
+              return acc;
+            }, {});
+            this.generatePieChart();
+          } else {
+            console.error('Unexpected response format:', response);
+          }
         });
       });
     }
+    
     
     calculateTotalSavings(): number {
     return this.weeklyBudgets.reduce((total, week) => total + week.savings, 0);
@@ -150,12 +167,18 @@ import { AuthService } from '../services/auth.service';
     }
   
     this.budgetService.resetCurrentWeek().subscribe(() => {
-      this.budgetService.getWeeklyBudgets(currentUser).subscribe((budgets) => {
-        this.weeklyBudgets = budgets;
+      this.budgetService.getWeeklyBudgets(currentUser).subscribe((response) => {
+        if (response && Array.isArray(response.budgets)) {
+          this.weeklyBudgets = response.budgets; 
+        } else {
+          console.error('Unexpected response format:', response);
+          this.weeklyBudgets = []; 
+        }
       });
       this.currentWeek = this.budgetService.getCurrentWeek();
     });
   }
+  
   
 
   exportToExcel(): void {

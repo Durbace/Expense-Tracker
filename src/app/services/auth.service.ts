@@ -14,16 +14,16 @@ export class AuthService {
 
   login(username: string, password: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/login`, { username, password }).pipe(
-      tap((response: any) => {
-        if (response.success) {
-          localStorage.setItem('token', response.token); 
-          localStorage.setItem('currentUser', username); 
-          console.log('User logged in. Redirecting to expenses...');
-          this.router.navigate(['/expenses']); 
-        }
-      })
+        tap((response: any) => {
+            if (response.success) {
+                localStorage.setItem('token', response.token); 
+                localStorage.setItem('userId', response.userId); 
+                console.log('User logged in. Redirecting to expenses...');
+                this.router.navigate(['/expenses']); 
+            }
+        })
     );
-  }
+}
 
   signup(username: string, password: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/register`, { username, password });
@@ -40,8 +40,8 @@ export class AuthService {
   }
 
   getCurrentUser(): string | null {
-    return localStorage.getItem('currentUser');
-  }
+    return localStorage.getItem('userId');
+}
 
   checkLocalStorage(): void {
     const token = localStorage.getItem('token');

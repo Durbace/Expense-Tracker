@@ -74,15 +74,10 @@ export class BudgetService {
       );
   }
 
-  getWeeklyBudgets(userId: string): Observable<WeeklyBudget[]> {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      console.error('No user logged in. Cannot fetch weekly budgets.');
-      return of([]);
-    }
-
-    return this.http.get<WeeklyBudget[]>(`${this.apiUrl}/budgets/${currentUser}`);
+  getWeeklyBudgets(userId: string): Observable<{ budgets: WeeklyBudget[] }> {
+    return this.http.get<{ budgets: WeeklyBudget[] }>(`${this.apiUrl}/budgets/${userId}`);
   }
+  
 
   calculateTotalSavings(): Observable<number> {
     const currentUser = this.authService.getCurrentUser();
@@ -92,7 +87,14 @@ export class BudgetService {
     }
   
     return this.getWeeklyBudgets(currentUser).pipe(
-      map((budgets) => budgets.reduce((total, budget) => total + budget.savings, 0))
+      map((response) => {
+        if (response && Array.isArray(response.budgets)) {
+          return response.budgets.reduce((total, budget) => total + budget.savings, 0);
+        } else {
+          console.error('Unexpected response format:', response);
+          return 0;
+        }
+      })
     );
   }
 
