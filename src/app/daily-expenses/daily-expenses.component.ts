@@ -1,6 +1,7 @@
 import { Component, Input, SimpleChanges, OnChanges } from '@angular/core';
 
 import { Expense, ExpenseService } from '../services/expense.service';
+import { AuthService } from '../services/auth.service';
 
 @Component({
     selector: 'app-daily-expenses',
@@ -21,7 +22,7 @@ export class DailyExpensesComponent implements OnChanges {
   days: string[] = ['MON', 'TUES', 'WED', 'THUR', 'FRI', 'SAT', 'SUN'];
   showDailyTotal: boolean = false;
 
-  constructor(private expenseService: ExpenseService) {}
+  constructor(private expenseService: ExpenseService, private authService: AuthService) {}
 
   ngOnInit(): void {
     if (!this.selectedDay) {
@@ -45,7 +46,6 @@ export class DailyExpensesComponent implements OnChanges {
     if (this.showAddExpense && this.editingExpenseId == null) { 
       this.currentCategory = '';
       this.currentAmount = null;
-      this.expenseCount = this.expenses.length + 1;
     }
   }
 
@@ -55,23 +55,27 @@ export class DailyExpensesComponent implements OnChanges {
   }
 
   addExpense() {
-    if (!this.currentCategory || this.currentAmount == null) return;
-    const newExpense: Expense = {
-      id: Date.now(),
-      day: this.selectedDay,
-      category: this.currentCategory,
-      amount: this.currentAmount
-    };
-    this.expenseService.addExpense(newExpense.day, newExpense.category, newExpense.amount);
-    this.resetForm();
-    this.closeAddExpense();
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser || !this.currentCategory || this.currentAmount == null) return;
+  
+    this.expenseService
+      .addExpense(currentUser, this.selectedDay, this.currentCategory, this.currentAmount)
+      .subscribe(() => {
+        this.refreshExpenses();
+        this.expenseCount++; 
+        this.closeAddExpense();
+      });
   }
   
   updateExpense() {
     if (!this.currentCategory || this.currentAmount == null || this.editingExpenseId == null) return;
-    this.expenseService.editExpense(this.selectedDay, this.editingExpenseId, this.currentCategory, this.currentAmount);
-    this.resetForm();
-    this.closeAddExpense();
+
+    this.expenseService
+      .editExpense(this.editingExpenseId.toString(), this.currentCategory, this.currentAmount)
+      .subscribe(() => {
+        this.refreshExpenses();
+        this.closeAddExpense();
+      });
   }
 
   editExpense(expense: Expense) {
@@ -82,8 +86,13 @@ export class DailyExpensesComponent implements OnChanges {
   }
 
   deleteExpense(id: number) {
-    this.expenseService.deleteExpense(this.selectedDay, id);
-    this.resetForm();
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) return;
+  
+    this.expenseService.deleteExpense(id.toString()).subscribe(() => {
+      this.refreshExpenses();
+      this.expenseCount = Math.max(0, this.expenseCount - 1); 
+    });
   }
 
   resetForm() {
@@ -96,8 +105,12 @@ export class DailyExpensesComponent implements OnChanges {
   }
 
   refreshExpenses() {
-    if(this.selectedDay) {
-      this.expenses = this.expenseService.getExpensesGroupedByDay()[this.selectedDay] || [];
+    const currentUser = this.authService.getCurrentUser();
+    if (currentUser) {
+      this.expenseService.getExpensesGroupedByDay(currentUser).subscribe((expenses) => {
+        this.expenses = expenses.filter((expense) => expense.day === this.selectedDay);
+        this.expenseCount = this.expenses.length; 
+      });
     }
   }
 

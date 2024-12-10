@@ -6,6 +6,7 @@
   import { WeeklyBudget } from '../services/budget.service';
   import { BudgetService } from '../services/budget.service';
   import { Expense, ExpenseService } from '../services/expense.service';
+import { AuthService } from '../services/auth.service';
 
   @Component({
     selector: 'app-weekly-summary',
@@ -35,25 +36,48 @@
   
   constructor(
     private expenseService: ExpenseService,
-    private budgetService: BudgetService
+    private budgetService: BudgetService,
+    private authService: AuthService
   ) {
-    this.expensesByDay = this.expenseService.getExpensesGroupedByDay();
-    this.weeklyBudgets = this.budgetService.getWeeklyBudgets();
-    this.generatePieChart();
+    this.refreshExpenses();
+    this.refreshWeeklyBudgets();
   }
 
     getDays(): string[] {
       return Object.keys(this.expensesByDay);
     }
 
-    calculateWeeklyTotal() {
-      if (this.showWeeklyTotal) {
-        this.weeklyTotal = null;
-        this.showWeeklyTotal = false;
-      } else {
-        this.weeklyTotal = this.expenseService.calculateWeeklyTotal();
-        this.showWeeklyTotal = true;
+    refreshExpenses() {
+      const currentUser = this.authService.getCurrentUser();
+      if (currentUser) {
+        this.expenseService.getExpensesGroupedByDay(currentUser).subscribe((expenses) => {
+          this.expensesByDay = expenses.reduce((acc: { [day: string]: Expense[] }, expense: Expense) => {
+            acc[expense.day] = acc[expense.day] || [];
+            acc[expense.day].push(expense);
+            return acc;
+          }, {});
+          this.generatePieChart();
+        });
       }
+    }
+  
+    refreshWeeklyBudgets() {
+      const currentUser = this.authService.getCurrentUser();
+      if (currentUser) {
+        this.budgetService.getWeeklyBudgets(currentUser).subscribe((budgets) => {
+          this.weeklyBudgets = budgets;
+        });
+      }
+    }
+
+    calculateWeeklyTotal() {
+      const currentUser = this.authService.getCurrentUser();
+      if (!currentUser) return;
+  
+      this.expenseService.calculateWeeklyTotal(currentUser).subscribe((result) => {
+        this.weeklyTotal = result.total;
+        this.showWeeklyTotal = true;
+      });
     }
 
     generatePieChart() {
@@ -75,31 +99,64 @@
     }
 
     saveWeeklyBudget(): void {
-      if (this.currentWeeklyBudget !== null && this.currentWeeklyBudget > 0) {
-        const weeklyTotal = this.expenseService.calculateWeeklyTotal();
-        this.budgetService.saveWeeklyBudget(this.currentWeeklyBudget, weeklyTotal);
-        this.weeklyBudgets = this.budgetService.getWeeklyBudgets();
-        this.weeklyBudgetFormVisible = false;
+      const currentUser = this.authService.getCurrentUser();
+      const budget = this.currentWeeklyBudget;
+      if (!currentUser || budget === null || budget <= 0) {
+        console.error('Invalid state to save weekly budget.');
+        return;
       }
+    
+      this.expenseService.calculateWeeklyTotal(currentUser).subscribe((result) => {
+        const weeklyTotal = result.total;
+    
+        this.budgetService.saveWeeklyBudget(budget, weeklyTotal).subscribe(() => {
+          this.refreshWeeklyBudgets();
+          this.weeklyBudgetFormVisible = false;
+        });
+      });
     }
   
     nextWeek() {
-      this.expenseService.resetWeeklyExpenses();
-      this.budgetService.incrementWeek();
-      this.currentWeek = this.budgetService.getCurrentWeek();
-      this.expensesByDay = this.expenseService.getExpensesGroupedByDay();
-      this.generatePieChart();
+      const currentUser = this.authService.getCurrentUser();
+      if (!currentUser) {
+        console.error('No user logged in. Cannot proceed to the next week.');
+        return;
+      }
+    
+      this.expenseService.resetWeeklyExpenses(currentUser).subscribe(() => {
+        this.budgetService.incrementWeek();
+        this.currentWeek = this.budgetService.getCurrentWeek();
+    
+        this.expenseService.getExpensesGroupedByDay(currentUser).subscribe((expenses) => {
+          this.expensesByDay = expenses.reduce((acc: { [day: string]: Expense[] }, expense: Expense) => {
+            acc[expense.day] = acc[expense.day] || [];
+            acc[expense.day].push(expense);
+            return acc;
+          }, {});
+          this.generatePieChart();
+        });
+      });
     }
-
+    
     calculateTotalSavings(): number {
     return this.weeklyBudgets.reduce((total, week) => total + week.savings, 0);
   }
 
   resetWeeklyBudgets(): void {
-    this.budgetService.resetCurrentWeek();
-    this.weeklyBudgets = this.budgetService.getWeeklyBudgets();
-    this.currentWeek = this.budgetService.getCurrentWeek(); 
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      console.error('No user logged in. Cannot reset weekly budgets.');
+      return;
+    }
+  
+    this.budgetService.resetCurrentWeek().subscribe(() => {
+      this.budgetService.getWeeklyBudgets(currentUser).subscribe((budgets) => {
+        this.weeklyBudgets = budgets;
+      });
+      this.currentWeek = this.budgetService.getCurrentWeek();
+    });
   }
+  
 
   exportToExcel(): void {
     const workbook = new ExcelJS.Workbook();

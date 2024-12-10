@@ -1,8 +1,12 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 import { AuthService } from './auth.service';
 
 export interface WeeklyBudget {
+  id?: string; 
   weekNumber: number;
   budget: number;
   expenses: number;
@@ -13,114 +17,98 @@ export interface WeeklyBudget {
   providedIn: 'root',
 })
 export class BudgetService {
-  private weeklyBudgets: WeeklyBudget[] = [];
-  private currentWeek: number = 1;
-  private currentWeeklyBudget: number | null = null;
+  private apiUrl = 'http://localhost:5000'; 
+  private currentWeek: number = 1; 
+  private currentWeeklyBudget: WeeklyBudget | null = null; 
 
-  constructor(private authService: AuthService) {}
+  constructor(private http: HttpClient, private authService: AuthService) {}
 
-  saveWeeklyBudget(budget: number, expenses: number): void {
-    const savings = budget - expenses;
+  saveWeeklyBudget(budget: number, expenses: number): Observable<WeeklyBudget | null> {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      console.error('No user logged in. Cannot save weekly budget.');
+      return of(null); 
+    }
 
-    const currentWeekIndex = this.weeklyBudgets.findIndex(
-        (week) => week.weekNumber === this.currentWeek
-      );
-
-      if (currentWeekIndex !== -1) {
-        this.weeklyBudgets[currentWeekIndex].budget = budget;
-        this.weeklyBudgets[currentWeekIndex].expenses = expenses;
-        this.weeklyBudgets[currentWeekIndex].savings = savings;
-      } else {
-        this.weeklyBudgets.push({
-          weekNumber: this.currentWeek,
-          budget: budget,
-          expenses: expenses,
-          savings: savings,
-        });
-      }
-
-      this.saveToLocalStorage();
-    this.currentWeeklyBudget = null;
+    const savings = budget - expenses; 
+    return this.http.post<WeeklyBudget>(`${this.apiUrl}/budgets`, {
+      userId: currentUser,
+      weekNumber: this.currentWeek,
+      budget,
+      expenses,
+      savings,
+    });
   }
 
   incrementWeek(): void {
-    this.currentWeek++; 
-    this.saveToLocalStorage();
+    this.currentWeek++;
+    this.currentWeeklyBudget = null;
   }
 
   setCurrentWeeklyBudget(budget: number): void {
-    this.currentWeeklyBudget = budget;
-    this.saveToLocalStorage();
+    this.currentWeeklyBudget = {
+      weekNumber: this.currentWeek,
+      budget,
+      expenses: 0,
+      savings: budget,
+    };
   }
 
-  getCurrentWeeklyBudget(): number | null {
-    return this.currentWeeklyBudget;
+  getCurrentWeeklyBudget(): Observable<WeeklyBudget | null> {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      console.error('No user logged in. Cannot fetch current weekly budget.');
+      return of(null);
+    }
+
+    return this.http
+      .get<WeeklyBudget>(`${this.apiUrl}/budgets/current/${currentUser}`)
+      .pipe(
+        map((budget) => {
+          if (budget) {
+            this.currentWeeklyBudget = budget;
+            this.currentWeek = budget.weekNumber;
+          }
+          return budget;
+        })
+      );
   }
 
-  getWeeklyBudgets(): WeeklyBudget[] {
-    return this.weeklyBudgets;
+  getWeeklyBudgets(userId: string): Observable<WeeklyBudget[]> {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      console.error('No user logged in. Cannot fetch weekly budgets.');
+      return of([]);
+    }
+
+    return this.http.get<WeeklyBudget[]>(`${this.apiUrl}/budgets/${currentUser}`);
   }
 
-  calculateTotalSavings(): number {
-    return this.weeklyBudgets.reduce((total, week) => total + week.savings, 0);
+  calculateTotalSavings(): Observable<number> {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      console.error('No user logged in. Cannot calculate total savings.');
+      return of(0); 
+    }
+  
+    return this.getWeeklyBudgets(currentUser).pipe(
+      map((budgets) => budgets.reduce((total, budget) => total + budget.savings, 0))
+    );
   }
 
   getCurrentWeek(): number {
     return this.currentWeek;
   }
 
-  resetCurrentWeek(): void {
-    this.weeklyBudgets = [];
+  resetCurrentWeek(): Observable<any> {
+    const currentUser = this.authService.getCurrentUser();
+    if (!currentUser) {
+      console.error('No user logged in. Cannot reset weekly budgets.');
+      return of(null); 
+    }
+
     this.currentWeek = 1;
-    this.saveToLocalStorage();
+    this.currentWeeklyBudget = null;
+    return this.http.delete(`${this.apiUrl}/budgets/reset/${currentUser}`);
   }
-
-  private saveToLocalStorage(): void {
-    const currentUser = this.authService.getCurrentUser(); 
-    if (!currentUser) {
-      console.error('No user logged in. Cannot save data.');
-      return;
-    }
-  
-    
-    localStorage.setItem(`weeklyBudgets_${currentUser}`, JSON.stringify(this.weeklyBudgets));
-    localStorage.setItem(`currentWeek_${currentUser}`, this.currentWeek.toString());
-  }
-  
-
-  public loadFromLocalStorage(): void {
-    const currentUser = this.authService.getCurrentUser(); 
-    if (!currentUser) {
-      console.warn('No user logged in. Cannot load data.');
-      this.weeklyBudgets = [];
-      this.currentWeek = 1;
-      return;
-    }
-  
-    const budgets = localStorage.getItem(`weeklyBudgets_${currentUser}`);
-    const week = localStorage.getItem(`currentWeek_${currentUser}`);
-  
-    if (budgets) {
-      try {
-        this.weeklyBudgets = JSON.parse(budgets);
-        if (!Array.isArray(this.weeklyBudgets)) {
-          console.error('weeklyBudgets is not an array. Initializing as empty array.');
-          this.weeklyBudgets = [];
-        }
-      } catch (error) {
-        console.error('Error parsing weeklyBudgets from localStorage:', error);
-        this.weeklyBudgets = [];
-      }
-    } else {
-      console.log('No budgets found in localStorage for user:', currentUser);
-      this.weeklyBudgets = [];
-    }
-  
-    if (week) {
-      this.currentWeek = parseInt(week, 10);
-    } else {
-      this.currentWeek = 1;
-    }
-  }
-  
 }

@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-
-import { AuthService } from './auth.service';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 
 export interface Expense {
-  id: number;
+  id: number; 
   day: string;
   category: string;
   amount: number;
@@ -13,118 +13,31 @@ export interface Expense {
   providedIn: 'root',
 })
 export class ExpenseService {
-  private expenses: { [key: string]: Expense[] } = {};
+  private apiUrl = 'http://localhost:5000';
 
-  constructor(private authService: AuthService) {}
+  constructor(private http: HttpClient) {}
 
-  addExpense(day: string, category: string, amount: number): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      console.error('No user logged in. Cannot add expense.');
-      return;
-    }
-
-    const newExpense: Expense = {
-      id: Date.now(),
-      day,
-      category,
-      amount,
-    };
-
-    this.expenses[day] = this.expenses[day] || [];
-    this.expenses[day].push(newExpense);
-    this.saveToLocalStorage();
+  addExpense(userId: string, day: string, category: string, amount: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/expenses`, { userId, day, category, amount });
   }
 
-  deleteExpense(day: string, id: number): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      console.error('No user logged in. Cannot delete expense.');
-      return;
-    }
-
-    this.expenses[day] = this.expenses[day]?.filter(expense => expense.id !== id) || [];
-    this.saveToLocalStorage();
+  deleteExpense(expenseId: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/expenses/${expenseId}`);
   }
 
-  getExpensesGroupedByDay(): { [key: string]: Expense[] } {
-    return this.expenses;
+  getExpensesGroupedByDay(userId: string): Observable<Expense[]> {
+    return this.http.get<Expense[]>(`${this.apiUrl}/expenses/${userId}`);
   }
 
-  private saveToLocalStorage(): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      console.error('No user logged in. Cannot save expenses.');
-      return;
-    }
-
-    localStorage.setItem(`expenses_${currentUser}`, JSON.stringify(this.expenses));
+  resetWeeklyExpenses(userId: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/expenses/reset/${userId}`);
   }
 
-  public loadFromLocalStorage(): void {
-    const currentUser = this.authService.getCurrentUser();
-    
-    if (!currentUser) {
-      console.error('No user logged in. Cannot load expenses.');
-      this.expenses = {};
-      return;
-    }
-  
-    const storedExpenses = localStorage.getItem(`expenses_${currentUser}`);
-  
-    if (storedExpenses) {
-      try {
-        const parsedExpenses = JSON.parse(storedExpenses);
-  
-        if (typeof parsedExpenses === 'object' && parsedExpenses !== null) {
-          this.expenses = parsedExpenses;
-        } else {
-          console.warn('Stored expenses are not in the correct format. Resetting data.');
-          this.expenses = {};
-        }
-      } catch (error) {
-        console.error('Error parsing expenses from localStorage:', error);
-        this.expenses = {};
-      }
-    } else {
-      console.log('No expenses found in localStorage for user:', currentUser);
-      this.expenses = {};
-    }
-  }
-  
-
-  resetWeeklyExpenses(): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      console.error('No user logged in. Cannot reset expenses.');
-      return;
-    }
-  
-    this.expenses = {};
-    this.saveToLocalStorage();
+  calculateWeeklyTotal(userId: string): Observable<{ total: number }> {
+    return this.http.get<{ total: number }>(`${this.apiUrl}/expenses/calculate/weekly-total/${userId}`);
   }
 
-  calculateWeeklyTotal(): number {
-    return Object.values(this.expenses)
-      .flat()
-      .reduce((total, expense) => total + expense.amount, 0);
+  editExpense(expenseId: string, category: string, amount: number): Observable<any> {
+    return this.http.put(`${this.apiUrl}/expenses/${expenseId}`, { category, amount });
   }
-
-  editExpense(day: string, id: number, category: string, amount: number): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      console.error('No user logged in. Cannot edit expense.');
-      return;
-    }
-  
-    const expenseIndex = this.expenses[day]?.findIndex(expense => expense.id === id);
-    if (expenseIndex !== -1 && expenseIndex !== undefined) {
-      this.expenses[day][expenseIndex].category = category;
-      this.expenses[day][expenseIndex].amount = amount;
-      this.saveToLocalStorage();
-    } else {
-      console.error('Expense not found. Cannot edit.');
-    }
-  }
-  
 }
