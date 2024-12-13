@@ -7,6 +7,7 @@
   import { BudgetService } from '../services/budget.service';
   import { Expense, ExpenseService } from '../services/expense.service';
 import { AuthService } from '../services/auth.service';
+import { Observable, of, switchMap } from 'rxjs';
 
   @Component({
     selector: 'app-weekly-summary',
@@ -48,47 +49,66 @@ import { AuthService } from '../services/auth.service';
     }
 
     refreshExpenses() {
-      const currentUser = this.authService.getCurrentUser();
-      if (currentUser) {
-        this.expenseService.getExpensesGroupedByDay(currentUser).subscribe((response) => {
-          if (response && Array.isArray(response.expenses)) {
-            this.expensesByDay = response.expenses.reduce((acc: { [day: string]: Expense[] }, expense: Expense) => {
-              acc[expense.day] = acc[expense.day] || [];
-              acc[expense.day].push(expense);
-              return acc;
-            }, {});
-            this.generatePieChart();
-          } else {
-            console.error('Unexpected response format:', response);
-          }
-        });
-      }
+      this.authService.getCurrentUser().subscribe((userId) => {
+        if (userId) { // Verifică dacă există un userId valid sub forma unui string
+          console.log('Current user ID:', userId);
+          this.expenseService.getExpensesGroupedByDay(userId).subscribe((response) => {
+            if (response && Array.isArray(response.expenses)) {
+              this.expensesByDay = response.expenses.reduce((acc: { [day: string]: Expense[] }, expense: Expense) => {
+                acc[expense.day] = acc[expense.day] || [];
+                acc[expense.day].push(expense);
+                return acc;
+              }, {});
+              this.generatePieChart();
+            } else {
+              console.error('Unexpected response format:', response);
+            }
+          });
+        } else {
+          console.warn('No user logged in.');
+        }
+      });
     }
     
   
     refreshWeeklyBudgets() {
-      const currentUser = this.authService.getCurrentUser();
-      if (currentUser) {
-        this.budgetService.getWeeklyBudgets(currentUser).subscribe((response) => {
-          if (response && Array.isArray(response.budgets)) {
-            this.weeklyBudgets = response.budgets;
-          } else {
-            console.error('Unexpected response format:', response);
-          }
-        });
-      }
+      this.authService.getCurrentUser().subscribe((userId) => {
+        if (userId) { // Verifică dacă există un userId valid
+          this.budgetService.getWeeklyBudgets(userId).subscribe((response) => {
+            if (response && Array.isArray(response.budgets)) {
+              this.weeklyBudgets = response.budgets;
+            } else {
+              console.error('Unexpected response format:', response);
+            }
+          });
+        } else {
+          console.warn('No user authenticated. Cannot refresh weekly budgets.');
+        }
+      });
     }
+    
     
 
     calculateWeeklyTotal() {
-      const currentUser = this.authService.getCurrentUser();
-      if (!currentUser) return;
-  
-      this.expenseService.calculateWeeklyTotal(currentUser).subscribe((result) => {
-        this.weeklyTotal = result.total;
-        this.showWeeklyTotal = true;
+      this.authService.getCurrentUser().subscribe((userId) => {
+        if (userId) { // Verifică dacă există un userId valid
+          this.expenseService.calculateWeeklyTotal(userId).subscribe((result) => {
+            if (result && result.total) {
+              this.weeklyTotal = result.total;
+              this.showWeeklyTotal = true;
+            } else {
+              console.error('No total calculated or wrong response format');
+              this.showWeeklyTotal = false;
+            }
+          });
+        } else {
+          console.warn('No user authenticated. Cannot calculate weekly total.');
+          this.showWeeklyTotal = false;
+        }
       });
     }
+    
+    
 
     generatePieChart() {
       const categoryTotals: { [key: string]: number } = {};
@@ -108,48 +128,53 @@ import { AuthService } from '../services/auth.service';
       this.weeklyBudgetFormVisible = true;
     }
 
-    saveWeeklyBudget(): void {
-      const currentUser = this.authService.getCurrentUser();
-      const budget = this.currentWeeklyBudget;
-      if (!currentUser || budget === null || budget <= 0) {
-        console.error('Invalid state to save weekly budget.');
-        return;
-      }
+    saveWeeklyBudget() {
+      const budget = this.currentWeeklyBudget || 0;
+      const expenses = 0; // Poți modifica valoarea inițială dacă este cazul
     
-      this.expenseService.calculateWeeklyTotal(currentUser).subscribe((result) => {
-        const weeklyTotal = result.total;
-    
-        this.budgetService.saveWeeklyBudget(budget, weeklyTotal).subscribe(() => {
-          this.refreshWeeklyBudgets();
-          this.weeklyBudgetFormVisible = false;
-        });
+      this.budgetService.saveWeeklyBudget(budget, expenses).subscribe({
+        next: (result) => {
+          if (result) {
+            console.log('Budget saved successfully:', result);
+            this.refreshWeeklyBudgets();
+            this.weeklyBudgetFormVisible = false;
+          } else {
+            console.warn('Failed to save budget. No user logged in.');
+          }
+        },
+        error: (err) => {
+          console.error('Error saving budget:', err);
+        },
       });
     }
+    
   
-    nextWeek() {
-      const currentUser = this.authService.getCurrentUser();
-      if (!currentUser) {
-        console.error('No user logged in. Cannot proceed to the next week.');
-        return;
-      }
+    nextWeek(): void {
+      this.authService.getCurrentUser().subscribe((userId) => {
+        if (!userId) {
+          console.error('No user logged in. Cannot proceed to the next week.');
+          return;
+        }
     
-      this.expenseService.resetWeeklyExpenses(currentUser).subscribe(() => {
-        this.budgetService.incrementWeek();
-        this.currentWeek = this.budgetService.getCurrentWeek();
+        // Use userId directly since it's a string representing the user ID
+        this.expenseService.resetWeeklyExpenses(userId).subscribe(() => {
+          this.budgetService.incrementWeek();
+          this.currentWeek = this.budgetService.getCurrentWeek();
     
-        this.expenseService.getExpensesGroupedByDay(currentUser).subscribe((response) => {
-          const expensesArray = response?.expenses;
+          this.expenseService.getExpensesGroupedByDay(userId).subscribe((response) => {
+            const expensesArray = response?.expenses;
     
-          if (Array.isArray(expensesArray)) {
-            this.expensesByDay = expensesArray.reduce((acc: { [day: string]: Expense[] }, expense: Expense) => {
-              acc[expense.day] = acc[expense.day] || [];
-              acc[expense.day].push(expense);
-              return acc;
-            }, {});
-            this.generatePieChart();
-          } else {
-            console.error('Unexpected response format:', response);
-          }
+            if (Array.isArray(expensesArray)) {
+              this.expensesByDay = expensesArray.reduce((acc: { [day: string]: Expense[] }, expense: Expense) => {
+                acc[expense.day] = acc[expense.day] || [];
+                acc[expense.day].push(expense);
+                return acc;
+              }, {});
+              this.generatePieChart();
+            } else {
+              console.error('Unexpected response format:', response);
+            }
+          });
         });
       });
     }
@@ -160,24 +185,28 @@ import { AuthService } from '../services/auth.service';
   }
 
   resetWeeklyBudgets(): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      console.error('No user logged in. Cannot reset weekly budgets.');
-      return;
-    }
+    this.authService.getCurrentUser().subscribe((userId) => {
+      if (!userId) {
+        console.error('No user logged in. Cannot reset weekly budgets.');
+        return;
+      }
   
-    this.budgetService.resetCurrentWeek().subscribe(() => {
-      this.budgetService.getWeeklyBudgets(currentUser).subscribe((response) => {
-        if (response && Array.isArray(response.budgets)) {
-          this.weeklyBudgets = response.budgets; 
-        } else {
-          console.error('Unexpected response format:', response);
-          this.weeklyBudgets = []; 
-        }
+      this.budgetService.resetCurrentWeek().subscribe(() => {
+        this.budgetService.getWeeklyBudgets(userId).subscribe((response) => {
+          if (response && Array.isArray(response.budgets)) {
+            this.weeklyBudgets = response.budgets;
+          } else {
+            console.error('Unexpected response format:', response);
+            this.weeklyBudgets = [];
+          }
+        });
+  
+        this.currentWeek = this.budgetService.getCurrentWeek();
       });
-      this.currentWeek = this.budgetService.getCurrentWeek();
     });
   }
+  
+  
   
   
 
@@ -219,5 +248,17 @@ import { AuthService } from '../services/auth.service';
       });
       saveAs(blob, 'WeeklyExpenses.xlsx');
     });
+  }
+
+  private groupExpensesByDay(expenses: Expense[]): { [day: string]: Expense[] } {
+    const grouped = expenses.reduce((acc, expense) => {
+      const day = expense.day;
+      if (!acc[day]) {
+        acc[day] = [];
+      }
+      acc[day].push(expense);
+      return acc;
+    }, {} as { [day: string]: Expense[] });
+    return grouped;
   }
 }

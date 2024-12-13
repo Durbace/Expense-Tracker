@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { NgChartsModule } from 'ng2-charts';
 import { RouterModule } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { AppComponent } from './app.component';
 import { TabsComponent } from './tabs/tabs.component';
@@ -13,6 +14,7 @@ import { LoginComponent } from './login/login.component';
 import { SignupComponent } from './signup/signup.component';
 import { WelcomeComponent } from './welcome/welcome.component';
 import { AppRoutingModule } from './app-routing.module';
+import { CookieInterceptor } from './interceptors/cookie.interceptor';
 
 
 
@@ -35,6 +37,11 @@ import { AppRoutingModule } from './app-routing.module';
   ],
   providers: [
     provideHttpClient(), 
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: CookieInterceptor,
+      multi: true,
+    },
   ],
   bootstrap: [AppComponent]
 })

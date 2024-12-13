@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const User = require('./models/User'); 
 const Expense = require('./models/Expense'); 
@@ -16,8 +18,12 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log('MongoDB Connected'))
     .catch(err => console.log('MongoDB connection error:', err));
 
-app.use(cors());
+    app.use(cors({
+        origin: 'http://localhost:4200', 
+        credentials: true, 
+      }));
 app.use(bodyParser.json());
+app.use(cookieParser());
 
 app.post('/register', async (req, res) => {
     const { username, password } = req.body;
@@ -46,14 +52,50 @@ app.post('/login', async (req, res) => {
         if (!isMatch) {
             return res.status(400).json({ success: false, message: 'Invalid credentials' });
         }
+
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        res.cookie('authToken', token, {
+            httpOnly: true,
+            secure: true, 
+            maxAge: 3600000 // 1 ora
+        });
+
         res.status(200).json({
             success: true,
-            message: 'User logged in successfully',
-            userId: user._id, 
+            message: 'User logged in successfully'
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
+});
+
+const authenticateToken = (req, res, next) => {
+    const token = req.cookies.authToken;
+    if (!token) {
+        return res.status(401).json({ success: false, message: 'Access denied' });
+    }
+
+    try {
+        const verified = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = verified;
+        next();
+    } catch (err) {
+        res.status(403).json({ success: false, message: 'Invalid token' });
+    }
+};
+
+app.get('/protected-route', authenticateToken, (req, res) => {
+    res.status(200).json({ success: true, message: 'Access granted', userId: req.user.userId });
+});
+
+app.get('/check-auth', authenticateToken, (req, res) => {
+    res.status(200).json({ success: true, userId: req.user.userId.toString() });
+});
+
+app.post('/logout', (req, res) => {
+    res.clearCookie('authToken');
+    res.status(200).json({ success: true, message: 'Logged out successfully' });
 });
 
 app.post('/expenses', async (req, res) => {
@@ -129,24 +171,33 @@ app.delete('/expenses/reset/:userId', async (req, res) => {
     }
 });
 
-// Salvează sau actualizează un buget săptămânal
 app.post('/budgets', async (req, res) => {
-    const { userId, weekNumber, budget, expenses } = req.body;
-    const savings = budget - expenses;
-
     try {
+        console.log('Received request body:', JSON.stringify(req.body, null, 2));
+
+        const { userId, weekNumber, budget, expenses } = req.body;
+
+        // Validare userId
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ success: false, message: 'Invalid user ID' });
+        }
+
+        const savings = budget - expenses;
+
         const budgetEntry = await Budget.findOneAndUpdate(
-            { user: userId, weekNumber },
+            { user: new mongoose.Types.ObjectId(userId), weekNumber },
             { budget, expenses, savings },
             { new: true, upsert: true }
         );
+
         res.status(200).json({ success: true, budget: budgetEntry });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error('Error saving budget:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
     }
 });
 
-// Obține toate bugetele unui utilizator
+  
 app.get('/budgets/:userId', async (req, res) => {
     const { userId } = req.params;
 
@@ -158,7 +209,6 @@ app.get('/budgets/:userId', async (req, res) => {
     }
 });
 
-// Obține bugetul curent al unui utilizator
 app.get('/budgets/current/:userId', async (req, res) => {
     const { userId } = req.params;
 
@@ -170,7 +220,6 @@ app.get('/budgets/current/:userId', async (req, res) => {
     }
 });
 
-// Resetează toate bugetele unui utilizator
 app.delete('/budgets/reset/:userId', async (req, res) => {
     const { userId } = req.params;
 

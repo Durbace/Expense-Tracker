@@ -2,6 +2,7 @@ import { Component, Input, SimpleChanges, OnChanges } from '@angular/core';
 
 import { Expense, ExpenseService } from '../services/expense.service';
 import { AuthService } from '../services/auth.service';
+import { map, of, switchMap } from 'rxjs';
 
 @Component({
     selector: 'app-daily-expenses',
@@ -55,17 +56,23 @@ export class DailyExpensesComponent implements OnChanges {
   }
 
   addExpense() {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser || !this.currentCategory || this.currentAmount == null) return;
-  
-    this.expenseService
-      .addExpense(currentUser, this.selectedDay, this.currentCategory, this.currentAmount)
-      .subscribe(() => {
-        this.refreshExpenses();
-        this.expenseCount++; 
-        this.closeAddExpense();
-      });
+    this.authService.getCurrentUser().pipe(
+      switchMap((userId) => {
+        if (!userId || !this.currentCategory || this.currentAmount == null) {
+          console.error('Invalid state. Cannot add expense.');
+          return of(null); 
+        }
+
+        return this.expenseService.addExpense(userId, this.selectedDay, this.currentCategory, this.currentAmount);
+      })
+    ).subscribe(() => {
+      this.refreshExpenses(); 
+      this.expenseCount++; 
+      this.closeAddExpense();
+    });
   }
+  
+  
   
   updateExpense() {
     if (!this.currentCategory || this.currentAmount == null || this.editingExpenseId == null) return;
@@ -120,20 +127,27 @@ export class DailyExpensesComponent implements OnChanges {
   }
 
   refreshExpenses() {
-    const currentUser = this.authService.getCurrentUser();
-    if (currentUser) {
-      this.expenseService.getExpensesGroupedByDay(currentUser).subscribe((response) => {
-        if (response && Array.isArray(response.expenses)) {
-            this.expenses = response.expenses.filter((expense) => expense.day === this.selectedDay);
-            this.expenseCount = this.expenses.length + 1;
-        } else {
-            console.error('Unexpected response:', response);
-            this.expenses = [];
-            this.expenseCount = 1;
+    this.authService.getCurrentUser().pipe(
+      switchMap((userId) => {
+        if (!userId) {
+          console.error('No user logged in. Cannot refresh expenses.');
+          return of(null);  
         }
+  
+        return this.expenseService.getExpensesGroupedByDay(userId);
+      })
+    ).subscribe((response) => {
+      if (response && Array.isArray(response.expenses)) {
+        this.expenses = response.expenses.filter((expense) => expense.day === this.selectedDay);
+        this.expenseCount = this.expenses.length + 1;
+      } else {
+        console.error('Unexpected response:', response);
+        this.expenses = [];
+        this.expenseCount = 1;
+      }
     });
-    }
   }
+  
 
   calculateDailyTotal() {
     if (this.showDailyTotal) {

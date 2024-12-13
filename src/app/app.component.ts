@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 import { BudgetService } from './services/budget.service';
 import { AuthService } from './services/auth.service';
@@ -25,17 +26,36 @@ export class AppComponent implements OnInit{
   ) {}
 
   ngOnInit(): void {
-    this.isLoggedIn = this.authService.isLoggedIn();
+    this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe((event: any) => {
+        const publicPages = ['/welcome', '/login', '/signup'];
+        const currentUrl = event.urlAfterRedirects;
 
-    if (this.isLoggedIn) {
-      console.log('User is logged in.');
-
-      this.loadUserData();
-    } else {
-      console.log('User is not logged in. Redirecting to welcome...');
-      this.router.navigate(['/welcome']);
-    }
+        if (publicPages.includes(currentUrl)) {
+          this.isLoggedIn = false;
+        } else {
+          this.checkAuth();
+        }
+      });
   }
+  
+  private checkAuth(): void {
+    this.authService.isLoggedIn().subscribe(
+      (loggedIn) => {
+        this.isLoggedIn = loggedIn;
+        if (this.isLoggedIn) {
+          console.log('User is logged in.');
+          this.loadUserData();
+        }
+      },
+      (error) => {
+        console.error('Error checking login status:', error);
+        this.isLoggedIn = false;
+      }
+    );
+  }
+  
 
   onDayChange(day: string) {
     this.showDaily = day !== 'summary';
@@ -50,28 +70,39 @@ export class AppComponent implements OnInit{
   }
 
   private loadUserData(): void {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      console.error('No user logged in.');
-      return;
+    if (!this.isLoggedIn) {
+      return;  // Întrerupe executia dacă utilizatorul nu este autentificat
     }
 
-    this.budgetService.getWeeklyBudgets(currentUser).subscribe({
-      next: (budgets) => {
-        console.log('Weekly budgets loaded:', budgets);
-      },
-      error: (err) => {
-        console.error('Failed to load weekly budgets:', err);
-      }
-    });
+    this.authService.getCurrentUser().subscribe(
+      (userId) => {
+        if (userId) {  // Verifică dacă există un userId valid
+          console.log('User ID:', userId);
+          this.budgetService.getWeeklyBudgets(userId).subscribe({
+            next: (budgets) => {
+              console.log('Weekly budgets loaded:', budgets);
+            },
+            error: (err) => {
+              console.error('Failed to load weekly budgets:', err);
+            }
+          });
 
-    this.expenseService.getExpensesGroupedByDay(currentUser).subscribe({
-      next: (expenses) => {
-        console.log('Expenses loaded:', expenses);
+          this.expenseService.getExpensesGroupedByDay(userId).subscribe({
+            next: (expenses) => {
+              console.log('Expenses loaded:', expenses);
+            },
+            error: (err) => {
+              console.error('Failed to load expenses:', err);
+            }
+          });
+        } else {
+          console.error('No user logged in.');
+        }
       },
-      error: (err) => {
-        console.error('Failed to load expenses:', err);
+      (error) => {
+        console.error('Error fetching current user:', error);
       }
-    });
+    );
   }
+
 }

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 
 import { AuthService } from './auth.service';
 
@@ -24,21 +24,26 @@ export class BudgetService {
   constructor(private http: HttpClient, private authService: AuthService) {}
 
   saveWeeklyBudget(budget: number, expenses: number): Observable<WeeklyBudget | null> {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      console.error('No user logged in. Cannot save weekly budget.');
-      return of(null); 
-    }
-
-    const savings = budget - expenses; 
-    return this.http.post<WeeklyBudget>(`${this.apiUrl}/budgets`, {
-      userId: currentUser,
-      weekNumber: this.currentWeek,
-      budget,
-      expenses,
-      savings,
-    });
+    return this.authService.getCurrentUser().pipe(
+      switchMap((userId) => {
+        if (userId) {
+          const savings = budget - expenses;
+          return this.http.post<WeeklyBudget>(`${this.apiUrl}/budgets`, {
+            userId, 
+            weekNumber: this.currentWeek,
+            budget,
+            expenses,
+            savings,
+          }, { withCredentials: true });
+        } else {
+          console.error('No user logged in. Cannot save weekly budget.');
+          return of(null);
+        }
+      })
+    );
   }
+  
+  
 
   incrementWeek(): void {
     this.currentWeek++;
@@ -62,7 +67,7 @@ export class BudgetService {
     }
 
     return this.http
-      .get<WeeklyBudget>(`${this.apiUrl}/budgets/current/${currentUser}`)
+      .get<WeeklyBudget>(`${this.apiUrl}/budgets/current/${currentUser}`, { withCredentials: true })
       .pipe(
         map((budget) => {
           if (budget) {
@@ -75,28 +80,32 @@ export class BudgetService {
   }
 
   getWeeklyBudgets(userId: string): Observable<{ budgets: WeeklyBudget[] }> {
-    return this.http.get<{ budgets: WeeklyBudget[] }>(`${this.apiUrl}/budgets/${userId}`);
+    return this.http.get<{ budgets: WeeklyBudget[] }>(`${this.apiUrl}/budgets/${userId}`, { withCredentials: true });
   }
   
 
   calculateTotalSavings(): Observable<number> {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      console.error('No user logged in. Cannot calculate total savings.');
-      return of(0); 
-    }
-  
-    return this.getWeeklyBudgets(currentUser).pipe(
-      map((response) => {
-        if (response && Array.isArray(response.budgets)) {
-          return response.budgets.reduce((total, budget) => total + budget.savings, 0);
-        } else {
-          console.error('Unexpected response format:', response);
-          return 0;
+    return this.authService.getCurrentUser().pipe(
+      switchMap((userId) => {
+        if (!userId) {
+          console.error('No user logged in. Cannot calculate total savings.');
+          return of(0); 
         }
+  
+        return this.getWeeklyBudgets(userId).pipe(
+          map((response) => {
+            if (response && Array.isArray(response.budgets)) {
+              return response.budgets.reduce((total, budget) => total + budget.savings, 0);
+            } else {
+              console.error('Unexpected response format:', response);
+              return 0;
+            }
+          })
+        );
       })
     );
   }
+  
 
   getCurrentWeek(): number {
     return this.currentWeek;
@@ -111,6 +120,6 @@ export class BudgetService {
 
     this.currentWeek = 1;
     this.currentWeeklyBudget = null;
-    return this.http.delete(`${this.apiUrl}/budgets/reset/${currentUser}`);
+    return this.http.delete(`${this.apiUrl}/budgets/reset/${currentUser}`, { withCredentials: true });
   }
 }
