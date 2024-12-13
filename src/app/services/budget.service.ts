@@ -112,14 +112,17 @@ export class BudgetService {
   }
 
   resetCurrentWeek(): Observable<any> {
-    const currentUser = this.authService.getCurrentUser();
-    if (!currentUser) {
-      console.error('No user logged in. Cannot reset weekly budgets.');
-      return of(null); 
-    }
-
-    this.currentWeek = 1;
-    this.currentWeeklyBudget = null;
-    return this.http.delete(`${this.apiUrl}/budgets/reset/${currentUser}`, { withCredentials: true });
+    return this.authService.getCurrentUser().pipe(
+      switchMap((userId) => {
+        if (!userId || typeof userId !== 'string') {
+          console.error('Invalid user ID:', userId);
+          return of(null);
+        }
+        this.currentWeek = 1;
+        this.currentWeeklyBudget = null;
+        return this.http.delete(`${this.apiUrl}/budgets/reset/${userId}`, { withCredentials: true });
+      })
+    );
   }
+  
 }

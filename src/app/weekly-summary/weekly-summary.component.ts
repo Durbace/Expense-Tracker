@@ -200,31 +200,17 @@
   }
 
   resetWeeklyBudgets(): void {
-    this.authService.getCurrentUser().subscribe((userId) => {
-      if (!userId) {
-        console.error('No user logged in. Cannot reset weekly budgets.');
-        return;
-      }
-  
-      this.budgetService.resetCurrentWeek().subscribe(() => {
-        this.budgetService.getWeeklyBudgets(userId).subscribe((response) => {
-          if (response && Array.isArray(response.budgets)) {
-            this.weeklyBudgets = response.budgets;
-          } else {
-            console.error('Unexpected response format:', response);
-            this.weeklyBudgets = [];
-          }
-        });
-  
-        this.currentWeek = this.budgetService.getCurrentWeek();
-      });
+    this.budgetService.resetCurrentWeek().subscribe({
+      next: () => {
+        console.log('Weekly budgets reset successfully.');
+        this.refreshWeeklyBudgets();
+      },
+      error: (err) => {
+        console.error('Error resetting weekly budgets:', err);
+      },
     });
   }
   
-  
-  
-  
-
   exportToExcel(): void {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Weekly Expenses');
