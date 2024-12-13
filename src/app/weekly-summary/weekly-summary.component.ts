@@ -6,8 +6,8 @@
   import { WeeklyBudget } from '../services/budget.service';
   import { BudgetService } from '../services/budget.service';
   import { Expense, ExpenseService } from '../services/expense.service';
-import { AuthService } from '../services/auth.service';
-import { Observable, of, switchMap } from 'rxjs';
+  import { AuthService } from '../services/auth.service';
+
 
   @Component({
     selector: 'app-weekly-summary',
@@ -50,7 +50,7 @@ import { Observable, of, switchMap } from 'rxjs';
 
     refreshExpenses() {
       this.authService.getCurrentUser().subscribe((userId) => {
-        if (userId) { // Verifică dacă există un userId valid sub forma unui string
+        if (userId) { 
           console.log('Current user ID:', userId);
           this.expenseService.getExpensesGroupedByDay(userId).subscribe((response) => {
             if (response && Array.isArray(response.expenses)) {
@@ -73,10 +73,21 @@ import { Observable, of, switchMap } from 'rxjs';
   
     refreshWeeklyBudgets() {
       this.authService.getCurrentUser().subscribe((userId) => {
-        if (userId) { // Verifică dacă există un userId valid
+        if (userId) {
           this.budgetService.getWeeklyBudgets(userId).subscribe((response) => {
             if (response && Array.isArray(response.budgets)) {
               this.weeklyBudgets = response.budgets;
+    
+              const totalExpenses = Object.values(this.expensesByDay).reduce((sum, dayExpenses) => {
+                return sum + dayExpenses.reduce((daySum, expense) => daySum + expense.amount, 0);
+              }, 0);
+    
+              if (this.weeklyBudgets.length > 0) {
+                const currentBudget = this.weeklyBudgets.find((budget) => budget.weekNumber === this.currentWeek);
+                if (currentBudget) {
+                  currentBudget.expenses = totalExpenses; 
+                }
+              }
             } else {
               console.error('Unexpected response format:', response);
             }
@@ -86,7 +97,6 @@ import { Observable, of, switchMap } from 'rxjs';
         }
       });
     }
-    
     
 
     calculateWeeklyTotal() {
@@ -130,12 +140,12 @@ import { Observable, of, switchMap } from 'rxjs';
 
     saveWeeklyBudget() {
       const budget = this.currentWeeklyBudget || 0;
-      const expenses = 0; // Poți modifica valoarea inițială dacă este cazul
+      const expenses = this.calculateTotalExpenses(); 
     
       this.budgetService.saveWeeklyBudget(budget, expenses).subscribe({
         next: (result) => {
           if (result) {
-            console.log('Budget saved successfully:', result);
+            console.log('Budget saved successfully:', result); 
             this.refreshWeeklyBudgets();
             this.weeklyBudgetFormVisible = false;
           } else {
@@ -148,6 +158,12 @@ import { Observable, of, switchMap } from 'rxjs';
       });
     }
     
+    calculateTotalExpenses(): number {
+      return Object.values(this.expensesByDay).reduce((total, dayExpenses) => {
+        return total + dayExpenses.reduce((dayTotal, expense) => dayTotal + expense.amount, 0);
+      }, 0);
+    }
+    
   
     nextWeek(): void {
       this.authService.getCurrentUser().subscribe((userId) => {
@@ -156,7 +172,6 @@ import { Observable, of, switchMap } from 'rxjs';
           return;
         }
     
-        // Use userId directly since it's a string representing the user ID
         this.expenseService.resetWeeklyExpenses(userId).subscribe(() => {
           this.budgetService.incrementWeek();
           this.currentWeek = this.budgetService.getCurrentWeek();
