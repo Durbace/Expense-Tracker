@@ -71,14 +71,20 @@
 
 .prev-btn, .next-btn {
   position: absolute; 
+  border: none;
   padding: 10px 20px;
   background-color: #666666;
   color: white;
   cursor: pointer;
-  transition: background-color 0.3s ease;
-  top: 50px
- 
+  transition: background-color 0.3s ease, color 0.3s ease;
+  top: 50px;
 }
+
+.prev-btn:hover, .next-btn:hover {
+  background-color: #444444; 
+  color: #f0f0f0;
+}
+
 
 .prev-btn {
   left: 0;

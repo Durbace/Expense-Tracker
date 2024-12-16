@@ -71,12 +71,12 @@ export class AppComponent implements OnInit{
 
   private loadUserData(): void {
     if (!this.isLoggedIn) {
-      return;  // Întrerupe executia dacă utilizatorul nu este autentificat
+      return; 
     }
 
     this.authService.getCurrentUser().subscribe(
       (userId) => {
-        if (userId) {  // Verifică dacă există un userId valid
+        if (userId) { 
           console.log('User ID:', userId);
           this.budgetService.getWeeklyBudgets(userId).subscribe({
             next: (budgets) => {

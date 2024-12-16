@@ -32,4 +32,9 @@ export class LoginComponent {
 
     this.authService.login(this.username, this.password).subscribe(observer);
   }
+
+  goBack(): void {
+    this.router.navigate(['/welcome']);
+  }
+  
 }

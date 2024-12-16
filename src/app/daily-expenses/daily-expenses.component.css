@@ -69,6 +69,7 @@ input[type="number"], select {
   padding: 10px 20px;
   cursor: pointer;
   border: none;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .daily-total-btn {
@@ -77,6 +78,17 @@ input[type="number"], select {
   padding: 10px 20px;
   cursor: pointer;
   border: none;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.add-expense-btn:hover {
+  background-color: #444444; 
+  color: #f0f0f0;
+}
+
+.daily-total-btn:hover {
+  background-color: #333333; 
+  color: #f0f0f0; 
 }
 
 li {
@@ -93,9 +105,8 @@ li {
 
 .daily-total-text {
   color: #cccccc; 
-  margin-top: 5px; 
   margin-top: 10px; 
-  margin-left: 900px;
+  margin-left: 940px;
 }
 
 .expense-box {
@@ -141,6 +152,7 @@ li {
   margin-left: 0px;
   margin-top: -10px;
   font-size: 25px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .edit-btn {
@@ -149,6 +161,21 @@ li {
 
 .delete-btn {
   border-left: none;
+  background-color: black;
+  color: white; 
+  border: 2px solid #000; 
+}
+
+.delete-btn:hover {
+  background-color: #333333; 
+  color: #f0f0f0; 
+  border-color: black; 
+}
+
+.edit-btn:hover {
+  background-color: #f0f0f0; 
+  color: #000; 
+  border-color: #666; 
 }
 
 

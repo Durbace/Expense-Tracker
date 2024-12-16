@@ -100,8 +100,14 @@
     
 
     calculateWeeklyTotal() {
+      if (this.showWeeklyTotal) {
+        this.showWeeklyTotal = false;
+        this.weeklyTotal = null;
+        return;
+      }
+    
       this.authService.getCurrentUser().subscribe((userId) => {
-        if (userId) { // Verifică dacă există un userId valid
+        if (userId) { 
           this.expenseService.calculateWeeklyTotal(userId).subscribe((result) => {
             if (result && result.total) {
               this.weeklyTotal = result.total;
@@ -117,6 +123,7 @@
         }
       });
     }
+    
     
     
 
@@ -251,15 +258,15 @@
     });
   }
 
-  private groupExpensesByDay(expenses: Expense[]): { [day: string]: Expense[] } {
-    const grouped = expenses.reduce((acc, expense) => {
-      const day = expense.day;
-      if (!acc[day]) {
-        acc[day] = [];
-      }
-      acc[day].push(expense);
-      return acc;
-    }, {} as { [day: string]: Expense[] });
-    return grouped;
-  }
+  // private groupExpensesByDay(expenses: Expense[]): { [day: string]: Expense[] } {
+  //   const grouped = expenses.reduce((acc, expense) => {
+  //     const day = expense.day;
+  //     if (!acc[day]) {
+  //       acc[day] = [];
+  //     }
+  //     acc[day].push(expense);
+  //     return acc;
+  //   }, {} as { [day: string]: Expense[] });
+  //   return grouped;
+  // }
 }

@@ -17,7 +17,7 @@
       </ng-container>
     </tbody>
   </table>
-  <button (click)="calculateWeeklyTotal()">Calculate Weekly Total</button>
+  <button (click)="calculateWeeklyTotal()">Show Weekly Total</button>
   <div *ngIf="weeklyTotal !== null && showWeeklyTotal">
     <strong>Weekly Total: {{ weeklyTotal | currency }}</strong>
   </div>

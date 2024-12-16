@@ -58,7 +58,7 @@ app.post('/login', async (req, res) => {
         res.cookie('authToken', token, {
             httpOnly: true,
             secure: true, 
-            maxAge: 3600000 // 1 ora
+            maxAge: 3600000
         });
 
         res.status(200).json({
@@ -177,7 +177,6 @@ app.post('/budgets', async (req, res) => {
 
         const { userId, weekNumber, budget, expenses } = req.body;
 
-        // Validare userId
         if (!mongoose.Types.ObjectId.isValid(userId)) {
             return res.status(400).json({ success: false, message: 'Invalid user ID' });
         }
