@@ -1,16 +1,19 @@
 import { Component, OnInit } from '@angular/core';
-import { NavigationEnd, Router } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { CommonModule } from '@angular/common'; 
+import { filter } from 'rxjs';
 
 import { BudgetService } from './services/budget.service';
 import { AuthService } from './services/auth.service';
 import { ExpenseService } from './services/expense.service';
+import { TabsComponent } from './tabs/tabs.component';
 
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
     styleUrl: './app.component.css',
-    standalone: false
+    imports: [CommonModule, RouterModule, TabsComponent],
+    standalone: true
 })
 export class AppComponent implements OnInit{
   selectedDay: string | null = null;

@@ -7,7 +7,7 @@ import { WelcomeComponent } from './welcome/welcome.component';
 import { AuthGuard } from './services/auth.guard';
 import { AppComponent } from './app.component';
 
-const routes: Routes = [
+export const routes: Routes = [
   { path: '', redirectTo: '/welcome', pathMatch: 'full' },
   { path: 'welcome', component: WelcomeComponent },
   { path: 'login', component: LoginComponent },

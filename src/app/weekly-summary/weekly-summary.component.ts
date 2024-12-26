@@ -1,19 +1,25 @@
-  import { Component } from '@angular/core';
-  import { ChartType, ChartData } from 'chart.js';
-  import { saveAs } from 'file-saver';
-  import * as ExcelJS from 'exceljs';
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { ChartType, ChartData } from 'chart.js';
+import { saveAs } from 'file-saver';
+import * as ExcelJS from 'exceljs';
+import { NgChartsModule } from 'ng2-charts';
 
-  import { WeeklyBudget } from '../services/budget.service';
-  import { BudgetService } from '../services/budget.service';
-  import { Expense, ExpenseService } from '../services/expense.service';
-  import { AuthService } from '../services/auth.service';
+import { WeeklyBudget } from '../services/budget.service';
+import { BudgetService } from '../services/budget.service';
+import { Expense, ExpenseService } from '../services/expense.service';
+import { AuthService } from '../services/auth.service';
+
 
 
   @Component({
     selector: 'app-weekly-summary',
     templateUrl: './weekly-summary.component.html',
     styleUrl: './weekly-summary.component.css',
-    standalone: false
+    imports: [CommonModule, FormsModule, NgChartsModule], 
+    providers: [ExpenseService, BudgetService, AuthService],
+    standalone: true
 })
   export class WeeklySummaryComponent {
     expensesByDay: { [day: string]: Expense[] } = {};
@@ -123,9 +129,6 @@
         }
       });
     }
-    
-    
-    
 
     generatePieChart() {
       const categoryTotals: { [key: string]: number } = {};
@@ -257,16 +260,4 @@
       saveAs(blob, 'WeeklyExpenses.xlsx');
     });
   }
-
-  // private groupExpensesByDay(expenses: Expense[]): { [day: string]: Expense[] } {
-  //   const grouped = expenses.reduce((acc, expense) => {
-  //     const day = expense.day;
-  //     if (!acc[day]) {
-  //       acc[day] = [];
-  //     }
-  //     acc[day].push(expense);
-  //     return acc;
-  //   }, {} as { [day: string]: Expense[] });
-  //   return grouped;
-  // }
 }

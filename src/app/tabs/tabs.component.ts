@@ -1,10 +1,15 @@
-  import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+import { DailyExpensesComponent } from "../daily-expenses/daily-expenses.component";
+import { WeeklySummaryComponent } from '../weekly-summary/weekly-summary.component';
 
   @Component({
     selector: 'app-tabs',
     templateUrl: './tabs.component.html',
     styleUrl: './tabs.component.css',
-    standalone: false
+    imports: [CommonModule, DailyExpensesComponent, WeeklySummaryComponent],
+    standalone: true
 })
   export class TabsComponent {
     days: string[] = ['MON', 'TUES', 'WED', 'THUR', 'FRI', 'SAT', 'SUN'];

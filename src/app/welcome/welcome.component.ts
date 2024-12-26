@@ -1,11 +1,13 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-welcome',
   templateUrl: './welcome.component.html',
-  styleUrls: ['./welcome.component.css'],
-  standalone: false
+  styleUrl: './welcome.component.css',
+  imports: [CommonModule],
+  standalone: true
 })
 export class WelcomeComponent {
   constructor(private router: Router) {}

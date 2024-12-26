@@ -1,14 +1,19 @@
 import { Component, Input, SimpleChanges, OnChanges } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { of, switchMap } from 'rxjs';
 
 import { Expense, ExpenseService } from '../services/expense.service';
 import { AuthService } from '../services/auth.service';
-import { map, of, switchMap } from 'rxjs';
 
 @Component({
     selector: 'app-daily-expenses',
     templateUrl: './daily-expenses.component.html',
     styleUrl: './daily-expenses.component.css',
-    standalone: false
+    imports:[CommonModule, FormsModule, ReactiveFormsModule],
+    providers: [ExpenseService, AuthService],
+    standalone: true,
+    
 })
 export class DailyExpensesComponent implements OnChanges {
   @Input() selectedDay: string = 'MON';

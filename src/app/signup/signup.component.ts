@@ -1,12 +1,16 @@
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+
 import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-signup',
   templateUrl: './signup.component.html',
-  styleUrls: ['./signup.component.css'],
-  standalone: false
+  styleUrl: './signup.component.css',
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  standalone: true
 })
 export class SignupComponent {
   username = '';
