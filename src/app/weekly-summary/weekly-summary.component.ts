@@ -16,7 +16,7 @@ import { AuthService } from '../services/auth.service';
   @Component({
     selector: 'app-weekly-summary',
     templateUrl: './weekly-summary.component.html',
-    styleUrl: './weekly-summary.component.css',
+    styleUrl: './weekly-summary.component.scss',
     imports: [CommonModule, FormsModule, NgChartsModule], 
     providers: [ExpenseService, BudgetService, AuthService],
     standalone: true

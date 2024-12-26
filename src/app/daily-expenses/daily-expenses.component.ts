@@ -9,7 +9,7 @@ import { AuthService } from '../services/auth.service';
 @Component({
     selector: 'app-daily-expenses',
     templateUrl: './daily-expenses.component.html',
-    styleUrl: './daily-expenses.component.css',
+    styleUrl: './daily-expenses.component.scss',
     imports:[CommonModule, FormsModule, ReactiveFormsModule],
     providers: [ExpenseService, AuthService],
     standalone: true,

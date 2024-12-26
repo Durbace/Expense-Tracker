@@ -1,0 +1,181 @@
+$new-expense-bg: #f9f9f9;
+$new-expense-border: #ccc;
+$button-bg: #666666;
+$button-hover-bg: #444444;
+$button-color: white;
+$hover-color: #f0f0f0;
+$text-gray: #cccccc;
+
+.new-expense-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 20px;
+  width: 100%;
+  max-width: 500px;
+  box-sizing: border-box;
+
+  label,
+  input,
+  button {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .new-expense-box {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    background-color: $new-expense-bg;
+    border: 1px solid $new-expense-border;
+    padding: 15px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: -38px;
+    margin-left: 10px;
+
+    .form-group {
+      margin-bottom: 10px;
+      width: 100%;
+    }
+
+    .form-header {
+      width: 100%;
+      text-align: left;
+      margin-bottom: 15px;
+    }
+
+    input[type="number"],
+    select {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+
+    .save-btn {
+      background-color: $button-bg;
+      color: $button-color;
+      padding: 8px 16px;
+      width: 80%;
+      margin: 10px auto;
+    }
+  }
+}
+
+.buttons-container {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+
+  .add-expense-btn,
+  .daily-total-btn {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+
+    &.add-expense-btn {
+      background-color: $button-bg;
+      color: $button-color;
+
+      &:hover {
+        background-color: $button-hover-bg;
+        color: $hover-color;
+      }
+    }
+
+    &.daily-total-btn {
+      background-color: black;
+      color: $button-color;
+
+      &:hover {
+        background-color: #333333;
+        color: $hover-color;
+      }
+    }
+  }
+}
+
+.daily-total-text {
+  color: $text-gray;
+  margin-top: 10px;
+  margin-left: 940px;
+}
+
+li {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  margin-bottom: 10px;
+}
+
+.expense-box {
+  background-color: $new-expense-bg;
+  border: 2px solid $new-expense-border;
+  border-radius: 0;
+  padding: 20px;
+  margin: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 840px;
+  margin-bottom: 10px;
+  margin-left: -10px;
+  flex-grow: 1;
+
+  .expense-details {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-right: 10px;
+
+    .category-detail {
+      text-align: left;
+      flex-grow: 1;
+    }
+
+    .amount-detail {
+      text-align: right;
+    }
+  }
+}
+
+.edit-btn,
+.delete-btn {
+  background-color: transparent;
+  border: 2px solid $new-expense-border;
+  color: #333;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 0;
+  height: 64px;
+  width: 64px;
+  margin-left: 0;
+  margin-top: -10px;
+  font-size: 25px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+
+  &:hover {
+    background-color: $hover-color;
+    color: black;
+    border-color: $button-bg;
+  }
+
+  &.delete-btn {
+    background-color: black;
+    color: white;
+    border-color: black;
+
+    &:hover {
+      background-color: #333333;
+      color: $hover-color;
+      border-color: black;
+    }
+  }
+
+  &.edit-btn:hover {
+    background-color: $hover-color;
+    color: black;
+    border-color: #666;
+  }
+}

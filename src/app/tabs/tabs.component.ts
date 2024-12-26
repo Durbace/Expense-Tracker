@@ -7,7 +7,7 @@ import { WeeklySummaryComponent } from '../weekly-summary/weekly-summary.compone
   @Component({
     selector: 'app-tabs',
     templateUrl: './tabs.component.html',
-    styleUrl: './tabs.component.css',
+    styleUrl: './tabs.component.scss',
     imports: [CommonModule, DailyExpensesComponent, WeeklySummaryComponent],
     standalone: true
 })

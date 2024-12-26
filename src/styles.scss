@@ -1,0 +1,38 @@
+$font-family: 'Arial', sans-serif;
+$background-color: #f4f4f4;
+$container-bg: #fff;
+$container-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+$border-color: #e1e1e1;
+$text-color: #333;
+
+body {
+  font-family: $font-family;
+  background-color: $background-color;
+  margin: 0;
+  padding: 20px;
+}
+
+.container {
+  background-color: $container-bg;
+  padding: 20px;
+  box-shadow: $container-shadow;
+  border-radius: 5px;
+  width: 100%;
+  max-width: 800px;
+  margin: 20px auto;
+}
+
+h2 {
+  color: $text-color;
+  padding-bottom: 10px;
+  border-bottom: 1px solid $border-color;
+}
+
+.center-message {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 10px 0;
+  font-size: 30px;
+}
